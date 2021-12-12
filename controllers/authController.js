@@ -7,6 +7,7 @@ const User = require("../models/user");
 const validator = require("validator");
 const { promisify } = require("util");
 const sendMail = require("../utils/email").sendMail;
+const crypto = require("crypto");
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -169,10 +170,45 @@ exports.forgotPassword = async (req, res) => {
       user.passwordResetExpires = undefined;
       await user.save({ validateBeforeSave: false });
       res.status(500).json({
-        message: "An error has occured while sending the email, please try again in a few minutes",
-    
+        message:
+          "An error has occured while sending the email, please try again in a few minutes",
       });
     }
+  } catch (err) {
+    console.log(err);
+  }
+};
+exports.resetPassword = async (req, res) => {
+  try {
+    const hashtoken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+    const user = await User.findOne({
+      passwordResetToken: hashtoken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res.status(400).json({
+        message: "invalid token || expired, please submit another request",
+      });
+    }
+    if (req.body.password.length < 8) {
+      return res.status(400).json({
+        message: "the psw length must be at least 8 characters",
+      });
+    }
+    if (req.body.password !== req.body.passwordConfirm) {
+      return res.status(400).json({
+        message: "The psw and the confirmation psw do not match",
+      });
+    }
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+    createSendToken(user, 200, res);
   } catch (err) {
     console.log(err);
   }
