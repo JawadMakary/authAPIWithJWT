@@ -129,3 +129,32 @@ exports.protect = async (req, res, next) => {
     });
   }
 };
+
+// forgot password:
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    // find if user with provided mail exists
+    const user = await user.findOne({ email: req.body.email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "the user with the provided mail don't exist" });
+    }
+    // create random token
+    const resetToken = user.generatePasswordResetToken();
+    await user.save({
+        validateBeforeSave:false
+    });
+    // send token via mail
+    // url : http://abc/api/auth/resetPassword/token
+    // req.protocol:  http or https
+    const url=`${req.protocol}://${req.get("host")}/api/auth/resetPassword/${resetToken}`
+    const msg = `Forgot your password? Reset it by visiting the following this link : ${url}`
+
+
+
+  } catch (err) {
+    console.log(err);
+  }
+};

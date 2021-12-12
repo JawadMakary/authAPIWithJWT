@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+//crypto is built in with nodejs and express.js
+const crypto = require("crypto");
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -64,10 +66,19 @@ userSchema.methods.passwordChangedAfterTokenIssued = function (JWTTimestamp) {
       10
     );
     return JWTTimestamp < passwordChangeTime;
-
-
   }
-  return false
+  return false;
+};
+// generate psw reset token
+userSchema.methods.generatePasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  // 10 minutes
+  this.passwordResetExpires = Date.now() + 10 * 60 * 60 * 1000;
+  return resetToken;
 };
 
 module.exports = mongoose.model("User", userSchema);
