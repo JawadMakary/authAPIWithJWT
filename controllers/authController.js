@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/user");
 const validator = require("validator");
 const { promisify } = require("util");
+const sendMail = require("../utils/email").sendMail;
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -144,16 +145,34 @@ exports.forgotPassword = async (req, res) => {
     // create random token
     const resetToken = user.generatePasswordResetToken();
     await user.save({
-        validateBeforeSave:false
+      validateBeforeSave: false,
     });
     // send token via mail
     // url : http://abc/api/auth/resetPassword/token
     // req.protocol:  http or https
-    const url=`${req.protocol}://${req.get("host")}/api/auth/resetPassword/${resetToken}`
-    const msg = `Forgot your password? Reset it by visiting the following this link : ${url}`
-
-
-
+    const url = `${req.protocol}://${req.get(
+      "host"
+    )}/api/auth/resetPassword/${resetToken}`;
+    const msg = `Forgot your password? Reset it by visiting the following this link : ${url}`;
+    try {
+      await sendMail({
+        email: user.email,
+        subject: "Psw reset token (valid for 10 min only!)",
+        message: msg,
+      });
+      res.status(200).json({
+        message: "the reset token was succesfully sent to your mail address",
+        status: "Sucess",
+      });
+    } catch (error) {
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      res.status(500).json({
+        message: "An error has occured while sending the email, please try again in a few minutes",
+    
+      });
+    }
   } catch (err) {
     console.log(err);
   }
