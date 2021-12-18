@@ -1,10 +1,8 @@
-// implement a transporter : fct that let us transport our mail using mailtrap(dummy sandbox)
 const nodemailer = require("nodemailer");
 
-exports.sendMail = async function (options) {
-  // create transporter instance
+exports.sendMail = async (options) => {
+  // 1 - create a transporter instance
   const transporter = nodemailer.createTransport({
-    // we need to make sure that varNames are right
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
     auth: {
@@ -12,13 +10,16 @@ exports.sendMail = async function (options) {
       pass: process.env.EMAIL_PASSWORD,
     },
   });
-  //   define email options
+
+  // 2- Define the email options
   const mailOptions = {
-    from: "Progresss Click <info@progressClick.com>",
+    from: "GDG Lebanon <info@gdglebanon.com>",
     to: options.email,
     subject: options.subject,
     text: options.message,
   };
-  //send the mail
-  await transporter.sendMail(mailOptions)
+
+  // 3 - send the mail
+
+  await transporter.sendMail(mailOptions);
 };
