@@ -27,6 +27,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
       minLength: 8,
     },
+    role: {
+      type: String,
+      default: "user",
+      enum: ["admin", "ceo", "user"],
+    },
+    profilePic: String,
+    cloudinary_id: String,
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date,

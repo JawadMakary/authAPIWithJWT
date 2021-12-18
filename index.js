@@ -5,7 +5,7 @@ const app = express();
 
 const authRouter = require("./routes/authRoutes");
 const userRouter = require("./routes/userRoutes");
-
+// cloudinary : cloud storage
 // connect to DB server
 DB();
 
