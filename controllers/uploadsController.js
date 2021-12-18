@@ -5,7 +5,7 @@ const multer = require("multer");
 // to handle multi form data
 
 const User = require("../models/userModel");
-
+const cloudinary = require("../utils/cloudinary");
 // create the multer storage
 const multerStorage = multer.memoryStorage(); // to store files as buffer objects( as arr of binary data )
 
@@ -54,6 +54,51 @@ exports.uploadProfilePic = async (req, res) => {
 
       res.status(200).json({ message: "Image uploaded" });
     }
+  } catch (err) {
+    res.status(400).json({
+      status: "fail",
+      message: err.message,
+    });
+  }
+};
+
+// v2 : uploads img to cloudinary
+
+// 1) create multerstorage to deal with cloudinary
+
+const multerstoragev2 = multer.diskStorage({});
+
+// 2 create upload instance
+const uploadV2 = multer({
+  storage: multerstoragev2,
+  fileFilter: filter,
+});
+
+// 3 upload img to  populate file obj ...
+
+exports.uploadImagev2 = uploadV2.single("photo");
+
+// upload to cloudinary
+
+exports.uploadsViaCloudinary = async (req, res) => {
+  try {
+    const image = await cloudinary.uploader.upload(req.file.path, {
+      folder: "progress-click",
+      eager: [
+        {
+          width: 500,
+          height: 500,
+          crop: "fill",
+          gravity: "face",
+          radius: 20,
+        },
+      ],
+    });
+    req.user = await User.findByIdAndUpdate(req.user._id, {
+      profilePic: image.secure_url,
+      cloudinary_id:image.public_id
+    });
+    res.status(200).json({ message: "Image uploaded" });
   } catch (err) {
     res.status(400).json({
       status: "fail",

@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require("../controllers/authController.js");
 const userController = require("../controllers/userController");
 const uploadsController = require("../controllers/uploadsController");
+
 router.get(
   "/allUsers",
   authController.protect,
@@ -15,5 +16,6 @@ router.patch(
   uploadsController.uploadImage,
   uploadsController.uploadProfilePic
 );
+router.patch("/uploadImageToCloudinary",authController.protect, uploadsController.uploadImagev2, uploadsController.uploadsViaCloudinary);
 
 module.exports = router;
